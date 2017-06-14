@@ -8,7 +8,8 @@ include "../publics.php";
 $job=isset($_REQUEST['job']) ? $_REQUEST['job'] : '';
 //echo $job;
 
-if ($job=="login"){
+if ($job=="login")
+{
         $email= getCleanText(isset($_POST['email']) ? $_REQUEST['email'] : '');
         $password= isset($_POST['password']) ? $_REQUEST['password'] : '';
         $code = $_REQUEST ['captcha'];
@@ -59,49 +60,6 @@ else
   echo "captcha is wrong";
 }
 }	
-	        //$result = $stmt->setFetchMode(PDO::FETCH_ASSOC);
-	        //mysqli_stmt_bind_result($stmt, $col1);
-
-			/* fetch values */
-			/*while (mysqli_stmt_fetch($stmt)) {
-				printf("%s %s\n", $passwordHash);
-			}*/
-            //I can see that these values are identical to the ones
-            //echoed out in the registration function
-            /*echo $password;
-            echo $passwordHash;
-
-            if( password_verify($password,$passwordHash) )
-                echo 'success';
-            else echo 'failure';
-
-        else : log_sql_error( $err_msg );
-        endif;*/
-
-	/*$sql = "select password from users where username='$username' or email='$username'";
-	$result= mysqli_query($conn,$sql);
-	
-	if(mysqli_num_rows($result) == 1){
-    $row = mysqli_fetch_array($result, MYSQLI_ASSOC);
-    print "hashedPass = ${row['password']}";
-    print "myPassword: " . $password;
-		
-    if(password_verify('1234', $row['password'])){
-        print "Password match";
-		session_start();
-		$_SESSION["username"] = $username;
-		echo $_SESSION["username"] ;
-
-		header ("refresh:4; url=http://localhost:8080/negar/index.php"); // echo must be the first line
-		echo "WELCOME $username";
-    } 
-	else
-	{
-        print "The username or password do not match";
-		header ("refresh:4; url=login.php");
-		echo "Usename or password is not correct";
-	}*/
-
    
 if(isset($_POST['Log-out'])) {
 	$_SESSION["username"] = null;
@@ -109,33 +67,6 @@ if(isset($_POST['Log-out'])) {
 
 if(isset($_POST['sign-up'])) {
 	$_SESSION["username"] = null;
-}
-
-/*==========================================================================*/
-	   
-if ($job=="insertArt")
-{
-	$ArticleName= mysql_real_escape_string($_REQUEST['articleName']);
-	$ArticleBody= $_POST['articleBody'];
-	$conn=getConnection();
-	
-	//mysqli_query($con,$sql)  or $conn->query($duplicate)
-	
-	$duplicate= "select * from article where articleName='$ArticleName'";
-	$result= mysqli_query($conn,$duplicate);
-	//$result = mysql_query("SELECT * FROM article WHERE articleName='".$ArticleName."'",$conn);
-	
-	if (mysqli_num_rows($result)>0)
-	{
-		$data=array("id"=>0, "text"=>"This is duplicate content"); // This is your data array/result
-    echo json_encode($data); // use json_encode to convert it to json encoded string //duplicate behtar as =t az number use konim
-	}
-	else
-	{
-	 $data=array("id"=>1, "text"=>"This is non-duplicate content"); // This is your data array/result
-    echo json_encode($data);
-	}
-	die($result);
 }
 
 /*==========================================================================*/
@@ -197,30 +128,41 @@ $uploadedFile = $_FILES['photo']['tmp_name'];
 $size = getimagesize($uploadedFile);
 $destination = "uploaded/".$_FILES['photo']['name'];
 
-if(move_uploaded_file($uploadedFile, $destination))
-{
-        /*prepare sql query here and insert*/
-        $sql = "INSERT INTO users (userfullname,username,password,email,userphoto) VALUES ('$name','$username','$hashpass','$email','$destination');";
-		$result = $conn->query($sql);
+//if(move_uploaded_file($uploadedFile, $destination))
+//{
+    $query = "INSERT INTO users (userfullname,username,password,email) VALUES (?, ?, ?, ?)";
+	$stmt = $conn->stmt_init();
+	if ($stmt->prepare($query)) 
+	{
+		$stmt->bind_param("ssss", $name, $username, $hashpass, $email);
+		$result =$stmt->execute();
+		//$result = $stmt->get_result();
+        
+        /*prepare sql query here and insert
+        $sql = "INSERT INTO users (userfullname,username,password,email) VALUES ('$name','$username','$hashpass','$email');";
+		$result = $conn->query($sql);*/
+		
         if($result){
 
 			header ("refresh:4; url=login.php");
-			echo "File saved in database successfully <strong>{$filePath}</strong>";
+			echo "User saved in database successfully <strong>{$filePath}</strong>";
 			echo "submitOk";
 
-        }else{
-
-            echo "FilePth not uploaded there are an error <strong>{$filePath}</strong>";
-				header ("refresh:4; url=register.php");
-		echo "submitFailed";
+        }else
+        {
+			header ("refresh:4; url=register.php");
+			echo "submitFailed";
         }
-    }
-    else
-    {
-        echo $uploadedFile;
-        echo "File not uploaded there are an error <strong>{$file}</strong>";
+                
+        $stmt->close();
+//
+}
+// else
+// {
+//     echo $uploadedFile;
+//     echo "File not uploaded there are an error <strong>{$file}</strong>";
 
-    }
+// }
 
 }
 
@@ -240,11 +182,34 @@ if ($job=="sumbitpost")
     $file = $_FILES["file"]["name"];
     $filePath = "uploaded/" . $file;
 
-	if(move_uploaded_file($_FILES["file"]["tmp_name"], $filePath))
+//	if(move_uploaded_file($_FILES["file"]["tmp_name"], $filePath))
+//	{
+    $query = "INSERT INTO blogpost (titlepost,writerpost,bodypost) VALUES (?,?,?)";
+	$stmt = $conn->stmt_init();
+	if ($stmt->prepare($query)) 
 	{
+		$stmt->bind_param("sss", $titlepost, $writerpost, $bodypost);
+		$result =$stmt->execute();
+		//$result = $stmt->get_result();
 
-        /*prepare sql query here and insert*/
-        $sql = "INSERT INTO blogpost (titlepost,writerpost,bodypost,picpost) VALUES ('$titlepost','$writerpost','$bodypost','$filePath');";
+        /*prepare sql query here and insert
+        $sql = "INSERT INTO users (userfullname,username,password,email) VALUES ('$name','$username','$hashpass','$email');";
+		$result = $conn->query($sql);*/
+        if($result){
+
+			header ("refresh:4; url=blog.php?job=allblog");
+			echo "post saved in database successfully <strong>{$filePath}</strong>";
+			echo "submitOk";
+
+        }else{
+			header ("refresh:4; url=register.php");
+		    echo "submitFailed";
+        }
+                
+        $stmt->close();
+
+        /*prepare sql query here and insert
+        $sql = "INSERT INTO blogpost (titlepost,writerpost,bodypost) VALUES ('$titlepost','$writerpost','$bodypost');";
 		$result = $conn->query($sql);
         if(mysqli_errno($conn)==0){
 			header ("refresh:4; url=blog.php?job=allblog");
@@ -256,20 +221,22 @@ if ($job=="sumbitpost")
             echo "File not uploaded there are an error <strong>{$filePath}</strong>";
 				header ("refresh:4; url=register.php");
 		echo "submitFailed";
-        }
+        }*/
 
 
-    }
-	else
-	{
-        echo "File not uploaded there are an error <strong>{$file}</strong>";
+//    }
+//	else
+//	{
+//        echo "File not uploaded there are an error <strong>{$file}</strong>";
 
-    } 
+//    } 
+}
 }
 
 /*==========================================================================*/
 
-if ($job=="edituser"){
+if ($job=="edituser")
+{
 	
   $id = $_REQUEST['id'];  
   $username = $_REQUEST['name'];
@@ -277,10 +244,18 @@ if ($job=="edituser"){
   $email = $_REQUEST['email'];
   $conn = getConnection();
   
-  $updateQuery = "UPDATE users SET username='$username', userfullname='$userfullname', email='$email' WHERE id='$id'";  
-  $result = $conn -> query ($updateQuery);  
+  $query = "UPDATE users SET username=?, userfullname=?, email=? WHERE id='$id'";
+	$stmt = $conn->stmt_init();
+	if ($stmt->prepare($query)) 
+	{
+		$stmt->bind_param("sss", $username, $userfullname, $email);
+		$result =$stmt->execute();
+		// $stmt->get_result();
+		
+  //$updateQuery = "UPDATE users SET username='$username', userfullname='$userfullname', email='$email' WHERE id='$id'";  
+  //$result = $conn -> query ($updateQuery);  
 
-  if (mysqli_errno($conn)==0)
+  if ($result)
   {
     header ("refresh:2; url=users.php?job=alluser");
     echo "user with id".$id."has been updated";
@@ -290,4 +265,6 @@ if ($job=="edituser"){
     echo mysqli_error($conn);
   }
 }
+}
+
 ?>
